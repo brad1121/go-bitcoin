@@ -85,6 +85,23 @@ func (b *Bitcoind) GetBlockchainInfo() (info BlockchainInfo, err error) {
 	return
 }
 
+// GetChainTips returns the number of chaintips.
+func (b *Bitcoind) GetChainTips() (info ChainTips, err error) {
+	r, err := b.call("getchaintips", nil)
+	if err != nil {
+		return
+	}
+
+	if r.Err != nil {
+		rr := r.Err.(map[string]interface{})
+		err = fmt.Errorf("ERROR %s: %s", rr["code"], rr["message"])
+		return
+	}
+
+	err = json.Unmarshal(r.Result, &info)
+	return
+}
+
 // GetInfo returns the number of connections to other nodes.
 func (b *Bitcoind) GetInfo() (info GetInfo, err error) {
 	r, err := b.call("getinfo", nil)

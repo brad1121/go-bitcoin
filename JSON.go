@@ -20,6 +20,16 @@ type BlockchainInfo struct {
 	ChainWork            string  `json:"chainwork,omitempty"`
 }
 
+// ChainTips
+type ChainTips []chainTip
+
+type chainTip struct {
+	Height    int64  `json:"height"`
+	Hash      string `json:"hash"`
+	BranchLen int64  `json:"branchlen"`
+	Status    string `json:"status"`
+}
+
 // GetInfo comment
 type GetInfo struct {
 	Version           int32   `json:"version"`
