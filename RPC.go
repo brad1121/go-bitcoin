@@ -1,6 +1,7 @@
 package bitcoin
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -324,7 +325,17 @@ func (b *Bitcoind) GetBlockHash(blockHeight int) (blockHash string, err error) {
 
 // SendRawTransaction comment
 func (b *Bitcoind) SendRawTransaction(hex string) (txid string, err error) {
-	r, err := b.call("sendrawtransaction", []interface{}{hex})
+	r, err := b.call("sendrawtransaction", []interface{}{hex, true})
+	if err != nil {
+		return "", err
+	}
+	json.Unmarshal(r.Result, &txid)
+	return
+}
+
+// SendRawTransactionWithoutFeeCheck comment
+func (b *Bitcoind) SendRawTransactionWithoutFeeCheck(hex string) (txid string, err error) {
+	r, err := b.call("sendrawtransaction", []interface{}{hex, false, true})
 	if err != nil {
 		return "", err
 	}
@@ -384,6 +395,27 @@ func (b *Bitcoind) GetBlockHeader(blockHash string) (block *Block, err error) {
 	return
 }
 
+// GetRawBlock returns the raw bytes of the block with the given hash.
+func (b *Bitcoind) GetRawBlock(blockHash string) ([]byte, error) {
+	r, err := b.call("getblock", []interface{}{blockHash, 0})
+	if err != nil {
+		return nil, err
+	}
+
+	var rawHex string
+	err = json.Unmarshal(r.Result, &rawHex)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := hex.DecodeString(rawHex)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
 // GetBlockOverview returns basic information about the block with the given hash.
 func (b *Bitcoind) GetBlockOverview(blockHash string) (block *BlockOverview, err error) {
 	r, err := b.call("getblock", []interface{}{blockHash})
@@ -405,6 +437,24 @@ func (b *Bitcoind) GetBlockOverview(blockHash string) (block *BlockOverview, err
 // GetBlockHeaderHex returns the block header hex for the given hash.
 func (b *Bitcoind) GetBlockHeaderHex(blockHash string) (blockHeader *string, err error) {
 	r, err := b.call("getblockheader", []interface{}{blockHash, false})
+
+	if err != nil {
+		return
+	}
+
+	if r.Err != nil {
+		rr := r.Err.(map[string]interface{})
+		err = fmt.Errorf("ERROR %s: %s", rr["code"], rr["message"])
+		return
+	}
+
+	err = json.Unmarshal(r.Result, &blockHeader)
+	return
+}
+
+// GetBlockHeader returns the block header for the given hash.
+func (b *Bitcoind) GetBlockHeader(blockHash string) (blockHeader *BlockHeader, err error) {
+	r, err := b.call("getblockheader", []interface{}{blockHash})
 
 	if err != nil {
 		return

@@ -1,6 +1,9 @@
 package bitcoin
 
+// Force a new commit
+
 import (
+	"encoding/hex"
 	"testing"
 )
 
@@ -297,6 +300,20 @@ func TestGetBlockHeaderHex(t *testing.T) {
 	t.Logf("%s", *res)
 }
 
+func TestGetBlockHeader(t *testing.T) {
+	b, err := New("localhost", 8332, "bitcoin", "Yv5Nua9wLQyhHEUyHtSecMawAEgFlLp4s", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	res, err := b.GetBlockHeader("000000000000000005e827eecfc1b8cbb990f4ae458e748480d10b80458faf25")
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+	t.Logf("%+v", res)
+}
+
 func TestGetRawTransaction(t *testing.T) {
 	b, err := New("localhost", 8332, "bitcoin", "Yv5Nua9wLQyhHEUyHtSecMawAEgFlLp4s", false)
 	if err != nil {
@@ -448,4 +465,27 @@ func TestSendToAddress(t *testing.T) {
 	}
 
 	t.Log(tx)
+}
+
+func TestGetRawBlock(t *testing.T) {
+	b, err := New("localhost", 8332, "bitcoin", "Yv5Nua9wLQyhHEUyHtSecMawAEgFlLp4s", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	blockBytes, err := b.GetRawBlock("00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048")
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+
+	t.Log(hex.EncodeToString(blockBytes))
+
+	block, err := b.GetBlock("00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048")
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+
+	t.Logf("%+v", block)
 }
