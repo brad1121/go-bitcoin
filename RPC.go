@@ -68,7 +68,7 @@ func (b *Bitcoind) GetConnectionCount() (count uint64, err error) {
 	return
 }
 
-// GetBlockchainInfo returns the number of connections to other nodes.
+// GetBlockchainInfo returns general information about the blockchains current status.
 func (b *Bitcoind) GetBlockchainInfo() (info BlockchainInfo, err error) {
 	r, err := b.call("getblockchaininfo", nil)
 	if err != nil {
@@ -85,7 +85,7 @@ func (b *Bitcoind) GetBlockchainInfo() (info BlockchainInfo, err error) {
 	return
 }
 
-// GetChainTips returns the number of chaintips.
+// GetChainTips returns a list of curent and past chaintips.
 func (b *Bitcoind) GetChainTips() (info ChainTips, err error) {
 	r, err := b.call("getchaintips", nil)
 	if err != nil {
@@ -102,7 +102,7 @@ func (b *Bitcoind) GetChainTips() (info ChainTips, err error) {
 	return
 }
 
-// GetInfo returns the number of connections to other nodes.
+// GetInfo returns general information about the nodes current state.
 func (b *Bitcoind) GetInfo() (info GetInfo, err error) {
 	r, err := b.call("getinfo", nil)
 	if err != nil {
@@ -250,9 +250,13 @@ func (b *Bitcoind) GetRawMempool(details bool) (raw []byte, err error) {
 	return
 }
 
-// GetChainTxStats returns the number of connections to other nodes.
-func (b *Bitcoind) GetChainTxStats(blockcount int) (stats ChainTXStats, err error) {
-	p := []interface{}{blockcount}
+// GetChainTxStats returns the number transactions in the specified block count window, inclusive of the final blockhash if set.
+func (b *Bitcoind) GetChainTxStats(blockcount int, blockhash ...string) (stats ChainTXStats, err error) {
+	var _blockhash string
+	if len(blockhash) > 0 {
+		_blockhash = blockhash[0]
+	}
+	p := []interface{}{blockcount, _blockhash}
 	r, err := b.call("getchaintxstats", p)
 	if err != nil {
 		return
@@ -348,6 +352,23 @@ func (b *Bitcoind) SignRawTransaction(hex string) (sr *SignRawTransactionRespons
 // GetBlock returns information about the block with the given hash.
 func (b *Bitcoind) GetBlock(blockHash string) (block *Block, err error) {
 	r, err := b.call("getblock", []interface{}{blockHash})
+
+	if err != nil {
+		return
+	}
+
+	if r.Err != nil {
+		rr := r.Err.(map[string]interface{})
+		err = fmt.Errorf("ERROR %s: %s", rr["code"], rr["message"])
+		return
+	}
+
+	err = json.Unmarshal(r.Result, &block)
+	return
+}
+// GetBlock returns information about the block with the given hash.
+func (b *Bitcoind) GetBlockHeader(blockHash string) (block *Block, err error) {
+	r, err := b.call("getblockheader", []interface{}{blockHash})
 
 	if err != nil {
 		return
